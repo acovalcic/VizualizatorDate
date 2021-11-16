@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vizualizator Date</title>
+    <script type="text/javascript" src="script.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+    <h1>Vizualizator Date</h1>
+
+    <label for="select-tara">Alegeti o tara:</label>
+
+    <select name="tari" id="select-tara">
+        <option disabled selected>--Selectati o optiune--</option>
+        <option value="BE">Belgia</option>
+        <option value="BG">Bulgaria</option>
+        <option value="CZ">Cehia</option>
+        <option value="DK">Danemarca</option>
+        <option value="DE">Germania</option>
+        <option value="EE">Estonia</option>
+        <option value="IE">Irlanda</option>
+        <option value="EL">Grecia</option>
+        <option value="ES">Spania</option>
+        <option value="FR">Franta</option>
+        <option value="HR">Croatia</option>
+        <option value="IT">Italia</option>
+        <option value="CY">Cipru</option>
+        <option value="LV">Letonia</option>
+        <option value="LT">Lituania</option>
+        <option value="LU">Luxemburg</option>
+        <option value="HU">Ungaria</option>
+        <option value="MT">Malta</option>
+        <option value="NL">Olanda</option>
+        <option value="AT">Austria</option>
+        <option value="PL">Polonia</option>
+        <option value="PT">Portugalia</option>
+        <option value="RO">Romania</option>
+        <option value="SI">Slovenia</option>
+        <option value="SK">Slovacia</option>
+        <option value="FI">Finlanda</option>
+        <option value="SE">Suedia</option>
+    </select>
+
+    <div id="tooltip"></div>
+    <div id="chart" style="width: 600px; height: 300px; padding-top: 10px; padding-bottom: 20px;">
+    </div>
+
+    <div style="padding-top: 30px; padding-left: 50px; padding-bottom: 20px;">
+
+        <label for="select-an">Alegeti anul:</label>
+        <select name="ani" id="select-an">
+            <option disabled selected>--Selectati o optiune--</option>
+            <option value="2000">2000</option>
+            <option value="2001">2001</option>
+            <option value="2002">2002</option>
+            <option value="2003">2003</option>
+            <option value="2004">2004</option>
+            <option value="2005">2005</option>
+            <option value="2006">2006</option>
+            <option value="2007">2007</option>
+            <option value="2008">2008</option>
+            <option value="2009">2009</option>
+            <option value="2010">2010</option>
+            <option value="2011">2011</option>
+            <option value="2012">2012</option>
+            <option value="2013">2013</option>
+            <option value="2014">2014</option>
+            <option value="2015">2015</option>
+            <option value="2016">2016</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+        </select>
+    </div>
+
+    <table>
+        <caption>Tabel Date</caption>
+        <thead>
+            <tr>
+                <th>Tara</th>
+                <th>PIB pe cap de locuitor</th>
+                <th>Speranta de Viata</th>
+                <th>Populatie</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+
+    <script>
+        "use strict";
+        var data = fetch('./media/eurostat.json');
+        var tara = "";
+        const optiune = document.getElementById("select-tara");
+        optiune.addEventListener("change", (ev) => {
+            const value = ev.target.value;
+            tara = optiune.value;
+            document.getElementById("chart").innerHTML = "";
+            getDateTara(tara);
+        });
+
+        function getDateTara(tara) {
+            data.then(response => response.clone().json())
+                .then(data => {
+                    var dataPIB = data.filter(obj => {
+                        return obj.indicator === "PIB" && obj.tara === tara;
+                    });
+                    var dateGrafic = [];
+                    for (let i = 0; i < dataPIB.length; i++) {
+                        dateGrafic.push([dataPIB[i].an, dataPIB[i].valoare])
+
+                    }
+                    barChart.draw(dateGrafic);
+
+                });
+        }
+
+        const chartDiv = document.getElementById("chart");
+        const barChart = new BarChart(chartDiv);
+
+        var an = "";
+        const optiuneAn = document.getElementById("select-an");
+        optiuneAn.addEventListener("change", (ev) => {
+            const value = ev.target.value;
+            an = optiuneAn.value;
+            document.getElementById("tableBody").innerHTML = "";
+            getDateAn(an);
+        });
+
+        function getDateAn(an) {
+            data.then(response => response.clone().json())
+                .then(data => {
+                    var dataAn = data.filter(obj => {
+                        return obj.an === an;
+                    });
+
+                    var dataAnPIB = dataAn.filter(obj => {
+                        return obj.indicator === "PIB";
+                    });
+                    
+                    var tariAn = [];
+                    for (let i = 0; i < dataAnPIB.length; i++) {
+                        tariAn.push(dataAnPIB[i].tara);
+                    }
+
+                    var sumaPIB = 0;
+                    var sumaSV = 0;
+                    var sumaPOP = 0;
+                    var mediePIB = 0;
+                    var medieSV = 0;
+                    var mediePOP = 0;
+
+                    for (let i = 0; i < tariAn.length; i++) {
+                        for (let j = 0; j < dataAn.length; j++) {
+                            if (tariAn[i] === dataAn[j].tara) {
+                                if (dataAn[j].indicator === "PIB") {
+                                    sumaPIB += dataAn[j].valoare;
+                                }
+                                if (dataAn[j].indicator === "SV") {
+                                    sumaSV += dataAn[j].valoare;
+                                }
+                                if (dataAn[j].indicator === "POP") {
+                                    sumaPOP += dataAn[j].valoare;
+                                }
+                            }
+                        }
+                    }
+
+                    mediePIB = sumaPIB / 27;
+                    mediePOP = sumaPOP / 27;
+                    medieSV = sumaSV / 27;
+
+                    const tbody = document.getElementById("tableBody");
+                    for (let i = 0; i < tariAn.length; i++) {
+                        var tbodyTr = document.createElement("tr");
+                        var tbodyTd1 = document.createElement("td");
+                        var tbodyTd2 = document.createElement("td");
+                        var tbodyTd3 = document.createElement("td");
+                        var tbodyTd4 = document.createElement("td");
+
+                        tbodyTd1.innerHTML = tariAn[i];
+                        for (let j = 0; j < dataAn.length; j++) {
+                            if (tbodyTd1.innerHTML === dataAn[j].tara) {
+                                if (dataAn[j].indicator === "PIB") {
+                                    tbodyTd2.style.backgroundColor = `hsl(${Math.round(dataAn[j].valoare / sumaPIB * 1000)}, 100%, 50%, 1)`;
+                                    tbodyTd2.innerHTML = dataAn[j].valoare;
+                                }
+                                if (dataAn[j].indicator === "SV") {
+                                    if (dataAn[j].valoare < medieSV) {
+                                        tbodyTd3.style.backgroundColor = `hsl(${Math.round(dataAn[j].valoare / sumaSV * 100)}, 100%, 50%, 1)`;
+                                    } else {
+                                        tbodyTd3.style.backgroundColor = `hsl(${120 - Math.round(dataAn[j].valoare / sumaSV * 100)}, 100%, 50%, 1)`;
+                                    }
+                                    tbodyTd3.innerHTML = dataAn[j].valoare;
+                                }
+                                if (dataAn[j].indicator === "POP") {
+                                    tbodyTd4.style.backgroundColor = `hsl(${Math.round(dataAn[j].valoare / sumaPOP * 500)}, 100%, 50%, 1)`;
+                                    tbodyTd4.innerHTML = dataAn[j].valoare;
+                                }
+                            }
+                        }
+
+                        tbodyTr.appendChild(tbodyTd1);
+                        tbodyTr.appendChild(tbodyTd2);
+                        tbodyTr.appendChild(tbodyTd3);
+                        tbodyTr.appendChild(tbodyTd4);
+                        tbody.appendChild(tbodyTr);
+                    }
+                });
+        }
+
+    </script>
+</body>
+
+</html>
